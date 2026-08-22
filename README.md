@@ -6,7 +6,7 @@ You clipped out of reality. Now you're here. The fluorescent lights buzz. The ye
 
 ## Screenshot
 
-*It's better experienced than screenshotted.*
+![Omarchy Backrooms](screenshot-2026-08-22_03-31-09.png)
 
 ## Features
 
