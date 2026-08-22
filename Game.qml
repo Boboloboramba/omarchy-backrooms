@@ -371,6 +371,14 @@ Item {
   Item { id: keyCatcher; anchors.fill: parent; focus: true
     Keys.priority: Keys.BeforeItem
     Keys.onPressed: function(e) {
+      if (e.key === Qt.Key_Escape) {
+        if (root.state === "playing" || root.state === "paused") {
+          root.state = "title"; root.kForward = false; root.kBack = false
+          root.kLeft = false; root.kRight = false; root.kShift = false
+          mDrone.pause(); mBuzz.pause(); beatTimer.running = false
+        } else if (root.onExit) { root.onExit() }
+        e.accepted = true; return
+      }
       if (root.state === "title") { root.startGame(); e.accepted = true; return }
       if (root.state === "dead") { root.state = "title"; e.accepted = true; return }
       switch (e.key) {
@@ -413,6 +421,11 @@ Item {
 
   onActiveChanged: {
     if (root.active) {
+      if (root.state === "playing" || root.state === "paused") {
+        root.state = "title"; mDrone.pause(); mBuzz.pause(); beatTimer.running = false
+        root.kForward = false; root.kBack = false; root.kLeft = false
+        root.kRight = false; root.kShift = false
+      }
       keyCatcher.forceActiveFocus()
       root.lastMouseX = root.width / 2
       root.lastMouseY = root.height / 2

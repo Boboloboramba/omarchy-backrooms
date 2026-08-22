@@ -128,7 +128,7 @@ void main() {
   float cp = cos(uPitch), sp = sin(uPitch);
   vec3 fw = normalize(vec3(sy * cp, sp, -cy * cp));
   vec3 rt = normalize(vec3(cy, 0.0, sy));
-  vec3 up = cross(rt, fw);
+  vec3 up = cross(fw, rt);
 
   vec3 ro = vec3(uCamX, uCamY, uCamZ);
   float focal = 1.15;
