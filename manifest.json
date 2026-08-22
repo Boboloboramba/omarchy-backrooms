@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "local.backrooms",
+  "name": "Omarchy Backrooms",
+  "version": "1.0.0",
+  "author": "robertetheridge",
+  "description": "Full-screen 3D liminal space horror game. Navigate the Backrooms with WASD+mouse. Features jumpscares, eerie sounds, and spooky music.",
+  "kinds": [
+    "panel",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "panel": "Backrooms.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Omarchy Backrooms",
+    "description": "Enter the Backrooms - a 3D liminal space horror experience",
+    "category": "Fun",
+    "allowMultiple": false
+  }
+}
