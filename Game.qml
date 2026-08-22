@@ -40,6 +40,8 @@ Item {
   property bool startedOnce: false
   property string footWhich: "sounds/footstep1.wav"
   property int beatIdx: 0
+  property real e1X: 0; property real e1Y: 0; property real e1Z: 0; property real e1Op: 0
+  property real e2X: 0; property real e2Y: 0; property real e2Z: 0; property real e2Op: 0
 
   function fract(v) { return v - Math.floor(v) }
   function hash(x, y) {
@@ -138,6 +140,7 @@ Item {
     root.pitch = 0; root.velX = 0; root.velZ = 0
     root.sanity = 1.0; root.survived = 0; root.scares = 0
     root.flicker = 1.0; root.dark = 0; root.scareAmt = 0; root.shake = 0
+    root.e1Op = 0; root.e2Op = 0
     root.bobPhase = 0; root.darken = 0
     root.darkTimer = 0; root.flickTimer = 0; root.flickActive = false
     root.nextEventAt = 5 + Math.random() * 6
@@ -174,6 +177,37 @@ Item {
   function triggerThud() { thudSound.play() }
   function triggerWhisper() { whisperSound.play() }
 
+  function spawnEntity(idx) {
+    var angle = Math.random() * Math.PI * 2
+    var dist = 5 + Math.random() * 8
+    var ex = root.posCamX + Math.sin(angle) * dist
+    var ez = root.posCamZ - Math.cos(angle) * dist
+    var ey = 0.3 + Math.random() * 1.4
+    var prop = idx === 0 ? "e1Op" : "e2Op"
+    root["e" + (idx+1) + "X"] = ex
+    root["e" + (idx+1) + "Y"] = ey
+    root["e" + (idx+1) + "Z"] = ez
+    root[prop] = 0.0
+    entityFadeIn(idx)
+    entityFadeOut(idx)
+  }
+
+  function entityFadeIn(idx) {
+    var prop = "e" + (idx+1) + "Op"
+    var anim = entityIn0
+    if (idx === 1) anim = entityIn1
+    anim.target = root; anim.property = prop
+    anim.restart()
+  }
+
+  function entityFadeOut(idx) {
+    var prop = "e" + (idx+1) + "Op"
+    var anim = entityOut0
+    if (idx === 1) anim = entityOut1
+    anim.target = root; anim.property = prop
+    anim.restart()
+  }
+
   function scheduleNext() {
     var base = root.survived > 180 ? 4 : root.survived > 60 ? 5 : 6
     root.nextEventAt = base + Math.random() * (base * 0.6)
@@ -182,10 +216,11 @@ Item {
   function pickEvent() {
     var canScare = root.survived > 18
     var roll = Math.random()
-    if (canScare && roll < 0.18) { triggerScare(); return }
-    if (roll < 0.40) { triggerFlicker(); return }
-    if (roll < 0.58) { triggerThud(); return }
-    if (roll < 0.74) { triggerWhisper(); return }
+    if (canScare && roll < 0.15) { triggerScare(); return }
+    if (roll < 0.30) { spawnEntity(0); triggerFlicker(); return }
+    if (roll < 0.42) { spawnEntity(1); triggerThud(); return }
+    if (roll < 0.55) { triggerFlicker(); return }
+    if (roll < 0.68) { triggerWhisper(); return }
     triggerDarkness()
   }
 
@@ -270,6 +305,8 @@ Item {
     shader.uScare = root.scareAmt
     shader.uShake = root.shake
     shader.uSanity = root.sanity
+    shader.uE1X = root.e1X; shader.uE1Y = root.e1Y; shader.uE1Z = root.e1Z; shader.uE1Op = root.e1Op
+    shader.uE2X = root.e2X; shader.uE2Y = root.e2Y; shader.uE2Z = root.e2Z; shader.uE2Op = root.e2Op
 
     mBuzz.audioOutput.volume = root.flickActive ? 0.18 : 0.04
     mDrone.audioOutput.volume = root.scareAmt > 0.01 ? 0.12 : 0.42
@@ -312,6 +349,11 @@ Item {
     NumberAnimation { target: root; property: "scareAmt"; to: 0.0; duration: 400; easing.type: Easing.OutQuad }
     onFinished: { root.scareAmt = 0; mDrone.audioOutput.volume = 0.42 }
   }
+
+  NumberAnimation { id: entityIn0; target: root; property: "e1Op"; from: 0; to: 0.9; duration: 180; easing.type: Easing.InQuad }
+  NumberAnimation { id: entityOut0; target: root; property: "e1Op"; from: 0.9; to: 0; duration: 600; easing.type: Easing.OutQuad; running: false }
+  NumberAnimation { id: entityIn1; target: root; property: "e2Op"; from: 0; to: 0.85; duration: 180; easing.type: Easing.InQuad }
+  NumberAnimation { id: entityOut1; target: root; property: "e2Op"; from: 0.85; to: 0; duration: 600; easing.type: Easing.OutQuad; running: false }
 
   Timer {
     id: gameTick
@@ -365,6 +407,8 @@ Item {
     property real uScare: 0.0
     property real uShake: 0.0
     property real uSanity: 1.0
+    property real uE1X: 0; property real uE1Y: 0; property real uE1Z: 0; property real uE1Op: 0
+    property real uE2X: 0; property real uE2Y: 0; property real uE2Z: 0; property real uE2Op: 0
     fragmentShader: "shaders/backrooms.frag.qsb"
   }
 

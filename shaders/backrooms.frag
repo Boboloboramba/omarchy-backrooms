@@ -19,6 +19,14 @@ layout(std140, binding = 0) uniform buf {
   float uScare;
   float uShake;
   float uSanity;
+  float uE1X;
+  float uE1Y;
+  float uE1Z;
+  float uE1Op;
+  float uE2X;
+  float uE2Y;
+  float uE2Z;
+  float uE2Op;
 };
 
 const float PI = 3.141592653589793;
@@ -249,6 +257,58 @@ void main() {
 
     float edge = smoothstep(0.55, 1.25, length(suv) * 1.55);
     col = mix(col, vec3(0.42, 0.015, 0.01), edge * uScare * 0.5);
+  }
+
+  // In-world entities (ghosts/monsters emerging from behind pillars)
+  for (int ei = 0; ei < 2; ei++) {
+    float eX = ei == 0 ? uE1X : uE2X;
+    float eY = ei == 0 ? uE1Y : uE2Y;
+    float eZ = ei == 0 ? uE1Z : uE2Z;
+    float eOp = ei == 0 ? uE1Op : uE2Op;
+    if (eOp < 0.01) continue;
+
+    vec3 eWorld = vec3(eX, eY, eZ);
+    vec3 toE = eWorld - ro;
+    float eDist = length(toE);
+    if (eDist < 0.5 || eDist > 28.0) continue;
+
+    vec3 eForward = toE / eDist;
+    float eRight = dot(eForward, rt);
+    float eUp = dot(eForward, up);
+    float eDepth = dot(eForward, fw);
+    if (eDepth < 0.1) continue;
+
+    float eFov = focal / max(eDepth, 0.1);
+    vec2 eScreen = vec2(eRight, eUp) * eFov;
+    vec2 eDelta = eScreen - uv;
+
+    float eBodyH = 0.38 / eDepth;
+    float eBodyW = 0.16 / eDepth;
+    float eHeadR = 0.09 / eDepth;
+
+    float dBx = abs(eDelta.x) - eBodyW;
+    float dBy = abs(eDelta.y + eBodyH * 0.35) - eBodyH;
+    float eBody = length(max(vec2(dBx, dBy), 0.0)) + min(max(dBx, dBy), 0.0);
+
+    float eHead = length(eDelta - vec2(0.0, eBodyH * 0.85)) - eHeadR;
+    float eShape = min(eBody, eHead);
+
+    float eMask = smoothstep(0.008 / eDepth, -0.002 / eDepth, eShape);
+    if (eMask < 0.001) continue;
+
+    float eFog = 1.0 - exp(-eDist * 0.088);
+    vec3 eColor = vec3(0.008, 0.004, 0.003);
+    eColor = mix(eColor, fogCol, eFog * 0.6);
+    col = mix(col, eColor, eMask * eOp);
+
+    float elL = length((eDelta - vec2(-0.038 / eDepth, eBodyH * 0.92)) / (eHeadR * 0.35)) * eHeadR * 0.35;
+    float elR = length((eDelta - vec2(0.038 / eDepth, eBodyH * 0.92)) / (eHeadR * 0.35)) * eHeadR * 0.35;
+    float eEye = min(elL, elR) - 0.012 / eDepth;
+    float eEyeMask = smoothstep(0.006 / eDepth, 0.0, eEye) * eMask * eOp;
+    col += vec3(0.9, 0.05, 0.02) * eEyeMask * (0.7 + 0.3 * sin(uTime * 55.0 + float(ei) * 3.0));
+
+    float eVig = smoothstep(0.8, 0.2, length(eDelta) * 2.5);
+    col = mix(col, vec3(0.12, 0.01, 0.005), eVig * eOp * 0.12);
   }
 
   fragColor = vec4(col * qt_Opacity, 1.0);
